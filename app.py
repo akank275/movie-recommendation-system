@@ -1,14 +1,27 @@
 import streamlit as st
 import pickle
 
-from recommender import recommend
+from recommender import (
+    recommend,
+    hybrid_recommend,
+    explain_recommendation
+)
+
 from trending import get_trending_movies
 
 from auth import signup
 from auth import login
 
-from favorites import add_favorite
-from favorites import get_favorites
+from favorites import (
+    add_favorite,
+    get_favorites
+)
+
+from dashboard import (
+    genre_chart,
+    rating_chart,
+    top_movies_chart
+)
 
 
 # PAGE CONFIG
@@ -29,6 +42,9 @@ movies = pickle.load(
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "username" not in st.session_state:
+    st.session_state.username = ""
+
 if "recommended_names" not in st.session_state:
     st.session_state.recommended_names = []
 
@@ -44,7 +60,8 @@ st.title("🎬 AI Movie Recommendation System")
 menu = [
     "Home",
     "Login",
-    "Signup"
+    "Signup",
+    "Dashboard"
 ]
 
 choice = st.sidebar.selectbox(
@@ -82,7 +99,9 @@ if choice == "Home":
         st.image(trend_posters[4])
         st.caption(trend_names[4])
 
-    st.write("Login to get personalized movie recommendations.")
+    st.write(
+        "Login to get personalized movie recommendations."
+    )
 
 
 # SIGNUP PAGE
@@ -117,6 +136,33 @@ elif choice == "Signup":
             st.error(
                 "Username already exists"
             )
+
+
+# DASHBOARD PAGE
+elif choice == "Dashboard":
+
+    st.title("📊 Analytics Dashboard")
+
+    st.subheader("🎭 Genre Distribution")
+
+    st.plotly_chart(
+        genre_chart(),
+        use_container_width=True
+    )
+
+    st.subheader("⭐ Rating Distribution")
+
+    st.plotly_chart(
+        rating_chart(),
+        use_container_width=True
+    )
+
+    st.subheader("🔥 Most Rated Movies")
+
+    st.plotly_chart(
+        top_movies_chart(),
+        use_container_width=True
+    )
 
 
 # LOGIN PAGE
@@ -161,6 +207,25 @@ elif choice == "Login":
 
         username = st.session_state.username
 
+        st.sidebar.success(
+            f"Logged in as {username}"
+        )
+
+        # FAVORITES IN SIDEBAR
+        st.sidebar.subheader(
+            "❤️ Your Favorites"
+        )
+
+        favorites = get_favorites(
+            username
+        )
+
+        for fav in favorites:
+
+            st.sidebar.write(
+                fav.movie
+            )
+
         st.success(
             f"Welcome {username}"
         )
@@ -198,95 +263,85 @@ elif choice == "Login":
             movies["title"].values
         )
 
-  # RECOMMEND BUTTON
-if st.button("Recommend"):
+        # GENRE FILTER
+        genre_option = st.selectbox(
+            "Select Genre",
+            [
+                "All",
+                "Action",
+                "Comedy",
+                "Drama",
+                "Horror",
+                "Romance",
+                "Sci-Fi",
+                "Thriller"
+            ]
+        )
 
-    names, posters = recommend(
-        selected_movie
-    )
+        # RECOMMEND BUTTON
+        if st.button("Recommend"):
 
-    st.session_state.recommended_names = names
-    st.session_state.recommended_posters = posters
+            names, posters = hybrid_recommend(
+                selected_movie,
+                genre_filter=genre_option
+            )
 
+            st.session_state.recommended_names = names
+            st.session_state.recommended_posters = posters
 
-# SHOW RECOMMENDATIONS
-if len(st.session_state.recommended_names) > 0:
+        # SHOW RECOMMENDATIONS
+        if len(
+            st.session_state.recommended_names
+        ) > 0:
 
-    names = st.session_state.recommended_names
-    posters = st.session_state.recommended_posters
+            names = st.session_state.recommended_names
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+            posters = st.session_state.recommended_posters
 
-    with col1:
-        st.image(posters[0])
-        st.caption(names[0])
+            cols = st.columns(5)
 
-        if st.button(
-            f"❤️ Add {names[0]}",
-            key="fav1"
-        ):
-            add_favorite(username, names[0])
-            st.success("Added to favorites")
+            for i in range(len(names)):
 
-    with col2:
-        st.image(posters[1])
-        st.caption(names[1])
+                with cols[i]:
 
-        if st.button(
-            f"❤️ Add {names[1]}",
-            key="fav2"
-        ):
-            add_favorite(username, names[1])
-            st.success("Added to favorites")
+                    st.image(
+                        posters[i]
+                    )
 
-    with col3:
-        st.image(posters[2])
-        st.caption(names[2])
+                    st.caption(
+                        names[i]
+                    )
 
-        if st.button(
-            f"❤️ Add {names[2]}",
-            key="fav3"
-        ):
-            add_favorite(username, names[2])
-            st.success("Added to favorites")
+                    st.info(
+                        explain_recommendation(
+                            names[i]
+                        )
+                    )
 
-    with col4:
-        st.image(posters[3])
-        st.caption(names[3])
+                    if st.button(
+                        f"❤️ Add {names[i]}",
+                        key=f"fav{i}"
+                    ):
 
-        if st.button(
-            f"❤️ Add {names[3]}",
-            key="fav4"
-        ):
-            add_favorite(username, names[3])
-            st.success("Added to favorites")
+                        add_favorite(
+                            username,
+                            names[i]
+                        )
 
-    with col5:
-        st.image(posters[4])
-        st.caption(names[4])
+                        st.success(
+                            "Added to favorites"
+                        )
 
-        if st.button(
-            f"❤️ Add {names[4]}",
-            key="fav5"
-        ):
-            add_favorite(username, names[4])
-            st.success("Added to favorites")
-
-            username = st.session_state.username
-
-        # SIDEBAR FAVORITES
-        st.sidebar.subheader("❤️ Your Favorites")
-
-        favorites = get_favorites(username)
-
-        for fav in favorites:
-          st.sidebar.write(fav.movie)
-          st.sidebar.success(f"Logged in as {username}")
-
-        # LOGOUT
+        # LOGOUT BUTTON
         if st.button("Logout"):
 
             st.session_state.logged_in = False
+
             st.session_state.username = ""
 
+            st.session_state.recommended_names = []
+
+            st.session_state.recommended_posters = []
+
             st.rerun()
+

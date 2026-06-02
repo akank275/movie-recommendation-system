@@ -97,18 +97,22 @@ streamlit run app.py
 
 # 📸 Screenshots
 
-(Add your project screenshots here)
+![alt text](<Screenshot 2026-06-03 005844-1.png>)
+![alt text](<Screenshot 2026-06-03 005807.png>)
+![alt text](<Screenshot 2026-06-03 005747.png>)
+![alt text](<Screenshot 2026-06-03 005713.png>)
 
 ---
 
-# 🔮 Future Improvements
+## Advanced Features
 
-* Hybrid Recommendation System
-* Sentiment Analysis
-* Analytics Dashboard
-* Genre-based Recommendations
-* Explainable AI
-* Docker Deployment
+- Hybrid Recommendation System
+- Collaborative Filtering using SVD
+- Explainable AI Recommendations
+- Genre-Based Filtering
+- Analytics Dashboard
+- User Authentication
+- Favorites System
 
 ---
 
